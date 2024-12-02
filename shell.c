@@ -5,7 +5,62 @@
 #include <string.h>
 #include <stdbool.h>
 
-void type_prompt() {
+typedef bool (*InternalCommandHandler)(char **parameters);
+
+typedef struct {
+    char *command_name;
+    InternalCommandHandler handler;
+} CommandMapping;
+
+bool handle_exit(char **parameters) {
+    exit(0);
+}
+
+bool handle_cd(char **parameters) { 
+    if (parameters[1] == NULL) {
+        fprintf(stderr, "cd: expected argument to \"cd\"\n");
+        return true;
+    }
+
+    char path[1024] = {0};
+    int i = 1;
+    while (parameters[i] != NULL) {
+        if (i > 1) strcat(path, " ");
+        strcat(path, parameters[i]);
+        i++;
+    }
+
+    if (chdir(path) != 0) {
+        perror("cd failed");
+        return true;
+    }
+    return true;
+}
+
+bool handle_help(char **parameters) {
+    printf("Help: Available commands are 'cd', 'exit', and external binaries in /bin/\n");
+    return true;
+}
+
+CommandMapping commands_map[] = {
+    {"exit", handle_exit},
+    {"cd", handle_cd},
+    {"help", handle_help},
+    {NULL, NULL}  //final
+};
+
+bool execute_internal_command(char *command, char *parameters[]) {//AB
+    for (int i = 0; commands_map[i].command_name != NULL; i++) {
+        if (strcmp(command, commands_map[i].command_name) == 0) {
+            return commands_map[i].handler(parameters);
+        }
+    }
+    return false;  // not an intern command
+}
+
+
+
+void type_prompt() { 
 	static int first_time = 1;
 	// clear screen
 	if (first_time) {
@@ -21,7 +76,8 @@ void type_prompt() {
 	printf("@ %s > ", cwd);
 }
 
-void read_command(char cmd[], char *par[]) {
+
+void read_command(char cmd[], char *par[]) {//SR
 	char line[1024];
 	int count = 0, i = 0, j = 0;
 	char *token_array[100], *token;
@@ -64,9 +120,9 @@ int main() {
 		type_prompt();
 		read_command(command, parameters);
 		
-		if (strcmp(command, "exit") == 0)
-			break;
-		
+		if (execute_internal_command(command, parameters)) {
+                    continue;  // intern command.
+                }
 		if (fork() != 0)
 			wait( NULL );
 		else {
