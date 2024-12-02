@@ -9,11 +9,16 @@ void type_prompt() {
 	static int first_time = 1;
 	// clear screen
 	if (first_time) {
-		const char* CLEAR_SCREEN_ANSI = " \e[1;1H\e[2J";
+		const char* CLEAR_SCREEN_ANSI = " \033[1;1H\033[2J";
 		write(STDOUT_FILENO, CLEAR_SCREEN_ANSI, 12);
 		first_time = 0;
 	}
-	printf("#");
+
+	// get current working directory
+	char cwd[BUFSIZ];
+	if (NULL == getcwd(cwd, sizeof(cwd)))
+		perror("getcwd FAILED");
+	printf("@ %s > ", cwd);
 }
 
 void read_command(char cmd[], char *par[]) {
@@ -58,15 +63,20 @@ int main() {
 	while (true) {
 		type_prompt();
 		read_command(command, parameters);
+		
+		if (strcmp(command, "exit") == 0)
+			break;
+		
 		if (fork() != 0)
 			wait( NULL );
 		else {
 			strcpy(cmd, "/bin/");
 			strcat(cmd, command);
-			execve(cmd, parameters, envp);
-		}
-		if (strcmp(command, "exit") == 0)
+			if (execve(cmd, parameters, envp) == -1) {
+				perror("Invalid command");
+			}
 			break;
+		}
 	}
 	return 0;
 }
