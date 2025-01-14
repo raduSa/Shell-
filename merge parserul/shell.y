@@ -54,12 +54,17 @@ pipe_list:
 
 cmd_and_args:
     WORD arg_list {
+    	if (_currentSimpleCommand == NULL) {
+	    printf("[DEBUG] Creating simple command.\n");
+            _currentSimpleCommand = createSimpleCommand();
+        }
         insertArgument(_currentSimpleCommand, $1);
         printf("[DEBUG] Inserted argument: %s\n", $1);
 
         if (_currentCommand == NULL) {
             _currentCommand = createCommand();
         }
+    
         insertSimpleCommand(_currentCommand, _currentSimpleCommand);
         _currentSimpleCommand = NULL;  // Reset simple command after insertion
         printf("[DEBUG] Simple command inserted.\n");

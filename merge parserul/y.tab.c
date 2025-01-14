@@ -326,7 +326,7 @@ static YYINT  *yylexp = 0;
 
 static YYINT  *yylexemes = 0;
 #endif /* YYBTYACC */
-#line 96 "shell.y"
+#line 101 "shell.y"
 
 void yyerror(const char *s) {
     fprintf(stderr, "[ERROR] %s\n", s);
@@ -1067,20 +1067,25 @@ break;
 case 8:
 #line 56 "shell.y"
 	{
+    	if (_currentSimpleCommand == NULL) {
+	    printf("[DEBUG] Creating simple command.\n");
+            _currentSimpleCommand = createSimpleCommand();
+        }
         insertArgument(_currentSimpleCommand, yystack.l_mark[-1].string_val);
         printf("[DEBUG] Inserted argument: %s\n", yystack.l_mark[-1].string_val);
 
         if (_currentCommand == NULL) {
             _currentCommand = createCommand();
         }
+    
         insertSimpleCommand(_currentCommand, _currentSimpleCommand);
         _currentSimpleCommand = NULL;  /* Reset simple command after insertion*/
         printf("[DEBUG] Simple command inserted.\n");
     }
-#line 1081 "y.tab.c"
+#line 1086 "y.tab.c"
 break;
 case 10:
-#line 70 "shell.y"
+#line 75 "shell.y"
 	{
         printf("[DEBUG] Adding argument to simple command: %s\n", yystack.l_mark[0].string_val);
         if (_currentSimpleCommand == NULL) {
@@ -1089,34 +1094,34 @@ case 10:
         }
         insertArgument(_currentSimpleCommand, yystack.l_mark[0].string_val);
     }
-#line 1093 "y.tab.c"
-break;
-case 13:
-#line 85 "shell.y"
-	{ setOutputFile(_currentCommand, yystack.l_mark[0].string_val, "w"); }
 #line 1098 "y.tab.c"
 break;
-case 14:
-#line 86 "shell.y"
-	{ setInputFile(_currentCommand, yystack.l_mark[0].string_val); }
+case 13:
+#line 90 "shell.y"
+	{ setOutputFile(_currentCommand, yystack.l_mark[0].string_val, "w"); }
 #line 1103 "y.tab.c"
 break;
-case 15:
-#line 87 "shell.y"
-	{ setOutputFile(_currentCommand, yystack.l_mark[0].string_val, "a"); }
+case 14:
+#line 91 "shell.y"
+	{ setInputFile(_currentCommand, yystack.l_mark[0].string_val); }
 #line 1108 "y.tab.c"
 break;
-case 16:
-#line 88 "shell.y"
-	{ setErrorFile(_currentCommand, yystack.l_mark[0].string_val); }
+case 15:
+#line 92 "shell.y"
+	{ setOutputFile(_currentCommand, yystack.l_mark[0].string_val, "a"); }
 #line 1113 "y.tab.c"
 break;
-case 18:
-#line 92 "shell.y"
-	{ if (_currentCommand) _currentCommand->_background = 1; }
+case 16:
+#line 93 "shell.y"
+	{ setErrorFile(_currentCommand, yystack.l_mark[0].string_val); }
 #line 1118 "y.tab.c"
 break;
-#line 1120 "y.tab.c"
+case 18:
+#line 97 "shell.y"
+	{ if (_currentCommand) _currentCommand->_background = 1; }
+#line 1123 "y.tab.c"
+break;
+#line 1125 "y.tab.c"
     default:
         break;
     }
