@@ -77,11 +77,28 @@ void setErrorFile(Command *command, const char *filename) {
 
 // Execute the Command
 void executeCommand(Command *command) {
-    if (command->_numberOfSimpleCommands == 0) return;
+    if (command->_numberOfSimpleCommands == 0) {
+        fprintf(stderr, "[ERROR] No command to execute.\n");
+        return;
+    }
 
-    // Get the first simple command and the first argument
+    // Get the first SimpleCommand
     SimpleCommand *simpleCommand = command->_simpleCommands[0];
-    char *commandName = simpleCommand->_arguments[0];
+    if (simpleCommand->_numberOfArguments == 0) {
+        fprintf(stderr, "[ERROR] Empty command.\n");
+        return;
+    }
+
+    // The command name is stored as the last element in the arguments array
+    char *commandName = simpleCommand->_arguments[simpleCommand->_numberOfArguments - 1];
+
+    // Prepare arguments for execvp
+    char **args = malloc((simpleCommand->_numberOfArguments + 1) * sizeof(char *));
+    args[0] = commandName;
+    for (int i = 0; i < simpleCommand->_numberOfArguments - 1; i++) {
+        args[i + 1] = simpleCommand->_arguments[i];
+    }
+    args[simpleCommand->_numberOfArguments] = NULL; // Null-terminate the arguments array
 
     // Handle built-in commands
     if (strcmp(commandName, "help") == 0) {
@@ -90,28 +107,31 @@ void executeCommand(Command *command) {
         printf("- help: Show available commands\n");
         printf("- exit: Exit the shell\n");
         printf("- Any other Linux command (e.g., pwd, ls)\n");
+        free(args);
         return;
     }
 
     if (strcmp(commandName, "exit") == 0) {
         printf("Exiting shell.\n");
+        free(args);
         exit(0);
     }
 
     // Fork a new process
     pid_t pid = fork();
     if (pid == 0) {
-        // Child process
+        // Child process: Execute the command
         printf("[DEBUG] Executing: %s\n", commandName);
-        execvp(commandName, simpleCommand->_arguments);
-        perror("Error executing command");  // If execvp fails
+        execvp(commandName, args);
+        perror("Error executing command"); // If execvp fails
         exit(1);
     } else if (pid < 0) {
         perror("Fork failed");
+        free(args);
         return;
     }
 
-    // Parent process: wait for the child to complete
+    // Parent process: Wait for the child process if not running in the background
     if (!command->_background) {
         int status;
         waitpid(pid, &status, 0);
@@ -119,6 +139,9 @@ void executeCommand(Command *command) {
     } else {
         printf("[DEBUG] Command running in background (PID: %d).\n", pid);
     }
+
+    // Free the arguments array
+    free(args);
 }
 
 // Clear the Command

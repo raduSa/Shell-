@@ -54,8 +54,6 @@ pipe_list:
 
 cmd_and_args:
     WORD arg_list {
-        printf("[DEBUG] Creating simple command.\n");
-        _currentSimpleCommand = createSimpleCommand();
         insertArgument(_currentSimpleCommand, $1);
         printf("[DEBUG] Inserted argument: %s\n", $1);
 
@@ -71,9 +69,11 @@ cmd_and_args:
 arg_list:
     | arg_list WORD {
         printf("[DEBUG] Adding argument to simple command: %s\n", $2);
-        if (_currentSimpleCommand != NULL) {
-            insertArgument(_currentSimpleCommand, $2);
+        if (_currentSimpleCommand == NULL) {
+	    printf("[DEBUG] Creating simple command.\n");
+            _currentSimpleCommand = createSimpleCommand();
         }
+        insertArgument(_currentSimpleCommand, $2);
     }
     ;
 
