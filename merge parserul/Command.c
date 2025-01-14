@@ -129,6 +129,8 @@ void executeCommand(Command *command) {
             }
             fdout = fdpipe[1];
             fdin = fdpipe[0];
+            printf("[DEBUG] Setting up pipe %d -> %d\n", fdpipe[0], fdpipe[1]);
+
         }
 
         // Redirect output
@@ -166,12 +168,7 @@ void executeCommand(Command *command) {
         // Create the child process
         ret = fork();
         if (ret == 0) {
-            // Child process: Execute the current command
-            
-            char buffer[1024];
-	    read(fdin, buffer, sizeof(buffer));
-	    printf("Received from pipe: %s\n", buffer);
-	    
+            // Child process: Execute the current command        	    
             execvp(args[0], args);
             perror("execvp failed");
             exit(1);
