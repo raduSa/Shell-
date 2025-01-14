@@ -6,9 +6,11 @@
 
 extern int yylex();
 extern void yyerror(const char *s);
+extern char *input_buffer;
 
 Command *_currentCommand = NULL;
 SimpleCommand *_currentSimpleCommand = NULL;
+History *_history = NULL;
 %}
 
 %union {
@@ -32,6 +34,14 @@ command_line:
 
         // Reinitialize command structure
         _currentCommand = createCommand();  // Reset the command
+        if (_history == NULL) {
+            _history = createHistory();
+        }
+        addToHistory(_history, input_buffer);
+        
+        // Reset input buffer
+        input_buffer = NULL;
+        
         YYACCEPT;  // Force exit from `yyparse()`
     }
     | NEWLINE {
@@ -124,6 +134,7 @@ int main(void) {
     }
 
     freeCommand(_currentCommand);  // Clean up memory when exiting the shell
+    freeHistory(_history);
     return 0;
 }
 

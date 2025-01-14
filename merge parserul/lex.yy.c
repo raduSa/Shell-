@@ -448,9 +448,12 @@ char *yytext;
 #line 6 "shell.l"
 #include <string.h>
 #include "y.tab.h"  /* Ensure this matches the yacc/bison header file */
-#line 452 "lex.yy.c"
+
+char *input_buffer;  // Buffer to store the entire input
+int input_len;          // Length of the current input buffer
+#line 455 "lex.yy.c"
 /* Token definitions */
-#line 454 "lex.yy.c"
+#line 457 "lex.yy.c"
 
 #define INITIAL 0
 
@@ -667,9 +670,9 @@ YY_DECL
 		}
 
 	{
-#line 11 "shell.l"
+#line 14 "shell.l"
 
-#line 673 "lex.yy.c"
+#line 676 "lex.yy.c"
 
 	while ( /*CONSTCOND*/1 )		/* loops until end-of-file is reached */
 		{
@@ -729,59 +732,107 @@ do_action:	/* This label is used only to access EOF actions. */
 case 1:
 /* rule 1 can match eol */
 YY_RULE_SETUP
-#line 12 "shell.l"
-{ return NEWLINE; }
+#line 15 "shell.l"
+{ 
+                    // End of line, nothing to append here
+                    return NEWLINE; 
+                }
 	YY_BREAK
 case 2:
 YY_RULE_SETUP
-#line 13 "shell.l"
+#line 19 "shell.l"
 { /* Ignore spaces and tabs */ }
 	YY_BREAK
 case 3:
 YY_RULE_SETUP
-#line 14 "shell.l"
-{ return GREATGREAT; }
+#line 21 "shell.l"
+{ 
+		    if (input_buffer == NULL) input_len = 0;
+                    input_buffer = realloc(input_buffer, input_len + 4);
+                    strcpy(input_buffer + input_len, ">> ");
+                    input_len += 3;
+                    return GREATGREAT;
+                }
 	YY_BREAK
 case 4:
 YY_RULE_SETUP
-#line 15 "shell.l"
-{ return GREATAMPERSAND; }
+#line 28 "shell.l"
+{ 
+		    if (input_buffer == NULL) input_len = 0;
+                    input_buffer = realloc(input_buffer, input_len + 4);
+                    strcpy(input_buffer + input_len, ">& ");
+                    input_len += 3;
+                    return GREATAMPERSAND;
+                }
 	YY_BREAK
 case 5:
 YY_RULE_SETUP
-#line 16 "shell.l"
-{ return GREAT; }
+#line 35 "shell.l"
+{ 
+		    if (input_buffer == NULL) input_len = 0;
+                    input_buffer = realloc(input_buffer, input_len + 3);
+                    strcpy(input_buffer + input_len, "> ");
+                    input_len += 2;
+                    return GREAT;
+                }
 	YY_BREAK
 case 6:
 YY_RULE_SETUP
-#line 17 "shell.l"
-{ return LESS; }
+#line 42 "shell.l"
+{ 
+  	 	    if (input_buffer == NULL) input_len = 0;
+                    input_buffer = realloc(input_buffer, input_len + 3);
+                    strcpy(input_buffer + input_len, "< ");
+                    input_len += 2;
+                    return LESS;
+                }
 	YY_BREAK
 case 7:
 YY_RULE_SETUP
-#line 18 "shell.l"
-{ return PIPE; }
+#line 49 "shell.l"
+{ 
+		    if (input_buffer == NULL) input_len = 0;
+                    input_buffer = realloc(input_buffer, input_len + 3);
+                    strcpy(input_buffer + input_len, "| ");
+                    input_len += 2;
+                    return PIPE;
+                }
 	YY_BREAK
 case 8:
 YY_RULE_SETUP
-#line 19 "shell.l"
-{ return AMPERSAND; }
+#line 56 "shell.l"
+{ 
+		    if (input_buffer == NULL) input_len = 0;
+                    input_buffer = realloc(input_buffer, input_len + 3);
+                    strcpy(input_buffer + input_len, "& ");
+                    input_len += 2;
+                    return AMPERSAND;
+                }
 	YY_BREAK
 case 9:
 YY_RULE_SETUP
-#line 20 "shell.l"
+#line 64 "shell.l"
 {
                   /* Match words or filenames */
-                  yylval.string_val = strdup(yytext); /* strdup allocates memory */
+                  yylval.string_val = strdup(yytext);  /* strdup allocates memory */
+                  
+                  if (input_buffer == NULL) input_len = 0;
+                  int len = strlen(yytext);              
+                  input_buffer = realloc(input_buffer, input_len + len + 2);
+                  strcpy(input_buffer + input_len, yytext);     
+                  input_len += len;
+                  strcpy(input_buffer + input_len, " ");
+                  input_len++;
+
                   return WORD;
                 }
 	YY_BREAK
 case 10:
 YY_RULE_SETUP
-#line 25 "shell.l"
+#line 78 "shell.l"
 ECHO;
 	YY_BREAK
-#line 785 "lex.yy.c"
+#line 836 "lex.yy.c"
 case YY_STATE_EOF(INITIAL):
 	yyterminate();
 
@@ -1786,6 +1837,10 @@ void yyfree (void * ptr )
 
 #define YYTABLES_NAME "yytables"
 
-#line 25 "shell.l"
+#line 78 "shell.l"
+
+int yywrap(void) {
+    return 1;  // Required by Lex for EOF handling
+}
 
 

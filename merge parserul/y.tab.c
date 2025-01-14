@@ -28,21 +28,23 @@
 
 extern int yylex();
 extern void yyerror(const char *s);
+extern char *input_buffer;
 
 Command *_currentCommand = NULL;
 SimpleCommand *_currentSimpleCommand = NULL;
+History *_history = NULL;
 #ifdef YYSTYPE
 #undef  YYSTYPE_IS_DECLARED
 #define YYSTYPE_IS_DECLARED 1
 #endif
 #ifndef YYSTYPE_IS_DECLARED
 #define YYSTYPE_IS_DECLARED 1
-#line 14 "shell.y"
+#line 16 "shell.y"
 typedef union YYSTYPE {
     char *string_val;
 } YYSTYPE;
 #endif /* !YYSTYPE_IS_DECLARED */
-#line 46 "y.tab.c"
+#line 48 "y.tab.c"
 
 /* compatibility with bison */
 #ifdef YYPARSE_PARAM
@@ -326,7 +328,7 @@ static YYINT  *yylexp = 0;
 
 static YYINT  *yylexemes = 0;
 #endif /* YYBTYACC */
-#line 101 "shell.y"
+#line 111 "shell.y"
 
 void yyerror(const char *s) {
     fprintf(stderr, "[ERROR] %s\n", s);
@@ -353,10 +355,11 @@ int main(void) {
     }
 
     freeCommand(_currentCommand);  // Clean up memory when exiting the shell
+    freeHistory(_history);
     return 0;
 }
 
-#line 360 "y.tab.c"
+#line 363 "y.tab.c"
 
 /* For use in generated program */
 #define yydepth (int)(yystack.s_mark - yystack.s_base)
@@ -1027,7 +1030,7 @@ yyreduce:
     switch (yyn)
     {
 case 3:
-#line 27 "shell.y"
+#line 29 "shell.y"
 	{
         printf("[DEBUG] Executing command.\n");
         executeCommand(_currentCommand);
@@ -1036,36 +1039,44 @@ case 3:
 
         /* Reinitialize command structure*/
         _currentCommand = createCommand();  /* Reset the command*/
+        if (_history == NULL) {
+            _history = createHistory();
+        }
+        addToHistory(_history, input_buffer);
+        
+        /* Reset input buffer*/
+        input_buffer = NULL;
+        
         YYACCEPT;  /* Force exit from `yyparse()`*/
     }
-#line 1042 "y.tab.c"
+#line 1053 "y.tab.c"
 break;
 case 4:
-#line 37 "shell.y"
+#line 47 "shell.y"
 	{
         printf("[DEBUG] Empty line. Returning to prompt.\n");
         YYACCEPT;  /* Return to prompt on empty line*/
     }
-#line 1050 "y.tab.c"
+#line 1061 "y.tab.c"
 break;
 case 5:
-#line 41 "shell.y"
+#line 51 "shell.y"
 	{
         yyerrok;
         printf("[ERROR] Invalid command.\n");
         YYACCEPT;  /* Return to prompt after handling error*/
     }
-#line 1059 "y.tab.c"
+#line 1070 "y.tab.c"
 break;
 case 7:
-#line 50 "shell.y"
+#line 60 "shell.y"
 	{
         printf("[DEBUG] Pipe detected.\n");
     }
-#line 1066 "y.tab.c"
+#line 1077 "y.tab.c"
 break;
 case 8:
-#line 56 "shell.y"
+#line 66 "shell.y"
 	{
     	if (_currentSimpleCommand == NULL) {
 	    printf("[DEBUG] Creating simple command.\n");
@@ -1082,10 +1093,10 @@ case 8:
         _currentSimpleCommand = NULL;  /* Reset simple command after insertion*/
         printf("[DEBUG] Simple command inserted.\n");
     }
-#line 1086 "y.tab.c"
+#line 1097 "y.tab.c"
 break;
 case 10:
-#line 75 "shell.y"
+#line 85 "shell.y"
 	{
         printf("[DEBUG] Adding argument to simple command: %s\n", yystack.l_mark[0].string_val);
         if (_currentSimpleCommand == NULL) {
@@ -1094,34 +1105,34 @@ case 10:
         }
         insertArgument(_currentSimpleCommand, yystack.l_mark[0].string_val);
     }
-#line 1098 "y.tab.c"
+#line 1109 "y.tab.c"
 break;
 case 13:
-#line 90 "shell.y"
+#line 100 "shell.y"
 	{ setOutputFile(_currentCommand, yystack.l_mark[0].string_val, "w"); }
-#line 1103 "y.tab.c"
+#line 1114 "y.tab.c"
 break;
 case 14:
-#line 91 "shell.y"
+#line 101 "shell.y"
 	{ setInputFile(_currentCommand, yystack.l_mark[0].string_val); }
-#line 1108 "y.tab.c"
+#line 1119 "y.tab.c"
 break;
 case 15:
-#line 92 "shell.y"
+#line 102 "shell.y"
 	{ setOutputFile(_currentCommand, yystack.l_mark[0].string_val, "a"); }
-#line 1113 "y.tab.c"
+#line 1124 "y.tab.c"
 break;
 case 16:
-#line 93 "shell.y"
+#line 103 "shell.y"
 	{ setErrorFile(_currentCommand, yystack.l_mark[0].string_val); }
-#line 1118 "y.tab.c"
+#line 1129 "y.tab.c"
 break;
 case 18:
-#line 97 "shell.y"
+#line 107 "shell.y"
 	{ if (_currentCommand) _currentCommand->_background = 1; }
-#line 1123 "y.tab.c"
+#line 1134 "y.tab.c"
 break;
-#line 1125 "y.tab.c"
+#line 1136 "y.tab.c"
     default:
         break;
     }

@@ -5,6 +5,9 @@
 #include <fcntl.h>
 #include <unistd.h>  // For execvp, fork
 #include <sys/wait.h>  // For wait
+
+extern History *_history;
+
 // Create a new Command
 Command *createCommand() {
     Command *cmd = malloc(sizeof(Command));
@@ -26,13 +29,85 @@ Command *createCommand() {
 SimpleCommand *createSimpleCommand() {
     SimpleCommand *simpleCommand = malloc(sizeof(SimpleCommand));
     if (!simpleCommand) {
-        fprintf(stderr, "Memory allocation failed for SimpleCommand\n");
+        fprintf(stderr, "Failed to allocate memory for SimpleCommand\n");
         return NULL;
     }
     simpleCommand->_numberOfAvailableArguments = 5;
     simpleCommand->_numberOfArguments = 0;
     simpleCommand->_arguments = calloc(simpleCommand->_numberOfAvailableArguments, sizeof(char*));
     return simpleCommand;
+}
+
+// Create a new History instance
+History *createHistory() {
+    History *history = malloc(sizeof(History));
+    if (!history) {
+        fprintf(stderr, "Failed to allocate memory for History\n");
+        return NULL;
+    }
+    history->_size = 10;
+    history->_count = 0;
+    history->_commands = malloc(history->_size * sizeof(char *));
+    if (!history->_commands) {
+        free(history);
+        fprintf(stderr, "Failed to allocate memory for history commands\n");
+        return NULL;
+    }
+    return history;
+}
+
+// Add a command to history
+void addToHistory(History *history, const char *cmd) {
+    if (history->_count >= history->_size) {
+        // Resize the history array if it's full
+        history->_size *= 2;
+        history->_commands = realloc(history->_commands, history->_size * sizeof(char *));
+        if (!history->_commands) {
+            fprintf(stderr, "Failed to resize history array\n");
+            return;
+        }
+    }
+    history->_commands[history->_count++] = strdup(cmd);
+}
+
+// Show the last N commands from history
+void showHistoryN(History *history, int n) {
+    if (n <= 0) {
+        printf("Invalid number.\n");
+        return;
+    }
+    int start = history->_count - n;
+    if (start < 0) start = 0;
+
+    for (int i = start; i < history->_count; i++) {
+        printf("%d: %s\n", i + 1, history->_commands[i]);
+    }
+}
+
+// Show entire history
+void showHistory(History *history) {
+    for (int i = 0; i < history->_count; i++) {
+        printf("%d: %s\n", i + 1, history->_commands[i]);
+    }
+}
+
+// Clear the history
+void clearHistory(History *history) {
+    for (int i = 0; i < history->_count; i++) {
+        free(history->_commands[i]);
+    }
+    history->_count = 0;
+    history->_size = 10;
+    history->_commands = realloc(history->_commands, history->_size * sizeof(char *));
+}
+
+
+// Free the history object
+void freeHistory(History *history) {
+    if (history) {
+        clearHistory(history);
+        free(history);
+    }
 }
 
 // Insert an argument into a SimpleCommand
@@ -164,6 +239,25 @@ void executeCommand(Command *command) {
 		free(args);
 		exit(0);
 	}
+	
+	if (strcmp(args[0], "history") == 0) {
+		if (simpleCommand->_numberOfArguments > 1 && strcmp(args[1], "-c") == 0) {
+		   // Delete history
+		   printf("Clearing history.\n");
+		   clearHistory(_history);	
+		}
+		else if (simpleCommand->_numberOfArguments > 1 && (strcmp(args[1], "0") == 0 || atoi(args[1]) != 0)) {
+		   // Show last N commands
+		   int nr_commands = atoi(args[1]);
+		   printf("Showing last %d commands.\n", nr_commands);
+		   showHistoryN(_history, nr_commands);		   
+		}
+		else {
+		    printf("Showing history.\n");
+		    showHistory(_history);		   
+		}
+	    return;
+	}
 
         // Create the child process
         ret = fork();
@@ -223,4 +317,3 @@ void freeCommand(Command *command) {
         free(command);
     }
 }
-
