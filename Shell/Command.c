@@ -225,20 +225,65 @@ void executeCommand(Command *command) {
         
         // Handle built-in commands
 	if (strcmp(args[0], "help") == 0) {
-		printf("Shell Help:\n");
-		printf("Available commands:\n");
-		printf("- help: Show available commands\n");
-		printf("- exit: Exit the shell\n");
-		printf("- Any other Linux command (e.g., pwd, ls)\n");
-		free(args);
-		return;
-	}
+            printf("Shell Help:\n");
+            printf("Available commands:\n");
+            printf("- help: Show available commands\n");
+            printf("- exit: Exit the shell\n");
+            printf("- cd: Change directory\n");
+            printf("- pwd: Print working directory\n");
+            printf("- history: Shows history\n");
+            printf("- history -c: Deletes history\n");
+            printf("- history N: Shows last N commands\n");
+            printf("- Any other Linux command (e.g., pwd, ls)\n");
+            
+            free(args);
+            return;
+        }
 
-	if (strcmp(args[0], "exit") == 0) {
-		printf("Exiting shell.\n");
-		free(args);
-		exit(0);
-	}
+        if (strcmp(args[0], "exit") == 0) {
+            printf("Exiting shell.\n");
+            free(args);
+            exit(0);
+        }
+
+        if (strcmp(args[0], "cd") == 0) {
+            if (args[1] == NULL) {
+                fprintf(stderr, "cd: expected argument\n");
+            } else {
+                // Handling "cd .." for moving to the parent directory
+                if (strcmp(args[1], "..") == 0) {
+                    if (chdir("..") != 0) {
+                        perror("cd failed");
+                    }
+                } else {
+                          char *dirPath = strdup(args[1]);
+                          for (int k = 2; k < simpleCommand->_numberOfArguments; k++) {
+                              dirPath = realloc(dirPath, strlen(dirPath) + strlen(args[k]) + 2); // +2 for space and null terminator
+                              strcat(dirPath, " ");
+                              strcat(dirPath, args[k]);
+                          }
+
+                          // Change directory
+                          if (chdir(dirPath) != 0) {
+                              perror("cd failed");
+                          }
+                          free(dirPath);
+                }
+            }
+            free(args);
+            return;
+        }
+
+        if (strcmp(args[0], "pwd") == 0) {
+            char cwd[1024];
+            if (getcwd(cwd, sizeof(cwd)) != NULL) {
+                printf("%s\n", cwd);
+            } else {
+                perror("pwd failed");
+            }
+            free(args);
+            return;
+        }
 	
 	if (strcmp(args[0], "history") == 0) {
 		if (simpleCommand->_numberOfArguments > 1 && strcmp(args[1], "-c") == 0) {
