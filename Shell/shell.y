@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h> // getcwd
 #include "Command.h"
 
 extern int yylex();
@@ -119,7 +120,12 @@ int main(void) {
     _currentCommand = createCommand();  // Initialize the first command
 
     while (1) {
-        printf("shell> ");
+        printf("shell ");
+        // get current working directory
+	char cwd[BUFSIZ];
+	if (NULL == getcwd(cwd, sizeof(cwd)))
+		perror("getcwd FAILED");
+	printf("@ %s > ", cwd);
         fflush(stdout);  // Ensure prompt is shown immediately
 
         if (yyparse() == 0) {
