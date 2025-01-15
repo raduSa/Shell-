@@ -1,7 +1,7 @@
 # Shell-
 # TODO
 - ~~Parser~~
-- Executor
+- ~~Executor~~
 - Shell Subsystems (Dupa)
 
 Grammar:
