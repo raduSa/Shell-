@@ -34,7 +34,9 @@ sudo apt install byacc
 ## Usage
 
 To compile, execute: `make`
+
 Once built, you can run the shell by executing: `./shell`
+
 Inside the shell, use the help command to view available commands.
 
 ## References
