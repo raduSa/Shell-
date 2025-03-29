@@ -1,7 +1,0 @@
-apple
-banana
-cherry
-pattern-cherry
-pattern-apple
-pattern-banana
-
